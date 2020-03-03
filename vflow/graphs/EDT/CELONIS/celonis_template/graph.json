@@ -1,0 +1,222 @@
+{
+    "properties": {},
+    "groupResources": {
+        "memory": {
+            "limit": "256Mi"
+        },
+        "cpu": {
+            "limit": "100m"
+        }
+    },
+    "description": "Celonis Template",
+    "processes": {
+        "constantgenerator1": {
+            "component": "com.sap.util.constantGenerator",
+            "metadata": {
+                "label": "Generate SQL",
+                "x": 17,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {
+                    "content": "select ZZ_SEGMENT,VTEXT from ${Use_Schema}.ZBP_SEG_TYPET where CLIENT ='001' and SPRAS = 'E'"
+                }
+            }
+        },
+        "celonispushjobcreator1": {
+            "component": "cloud.celonis.pushJobCreator",
+            "metadata": {
+                "label": "Celonis Push Job Creator",
+                "x": 186,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "primary_keys": [
+                        "CASE_KEY"
+                    ],
+                    "realm": "eu-1",
+                    "is_upsert": true,
+                    "log_level": "INFO",
+                    "table_name": "SEGMENT",
+                    "team": "sap-qa"
+                }
+            }
+        },
+        "wiretap1": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 370.9999990463257,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "saphanaclient1": {
+            "component": "com.sap.hana.client2",
+            "metadata": {
+                "label": "SAP HANA (IC*)",
+                "x": 370.9999990463257,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "config": {}
+            }
+        },
+        "celoniscloudupload1": {
+            "component": "cloud.celonis.pushToCelonisIBC",
+            "metadata": {
+                "label": "Celonis Cloud Upload",
+                "x": 555.9999980926514,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "realm": "eu-1",
+                    "team": "sap-qa"
+                }
+            }
+        },
+        "celonisstatus1": {
+            "component": "EDT.CELONIS.call.status",
+            "metadata": {
+                "label": "Celonis Status",
+                "x": 740.999997138977,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {}
+            }
+        },
+        "wiretap2": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 740.999997138977,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "graphterminator1": {
+            "component": "com.sap.util.graphTerminator",
+            "metadata": {
+                "label": "Graph Terminator",
+                "x": 925.9999961853027,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "config": {}
+            }
+        }
+    },
+    "groups": [],
+    "connections": [
+        {
+            "metadata": {
+                "points": "141,112 181,112"
+            },
+            "src": {
+                "port": "out",
+                "process": "constantgenerator1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celonispushjobcreator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "310,103 337.99999952316284,103 337.99999952316284,52 365.9999990463257,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "310,121 337.99999952316284,121 337.99999952316284,163 365.9999990463257,163"
+            },
+            "src": {
+                "port": "output",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "sql",
+                "process": "saphanaclient1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "494.9999990463257,172 522.9999985694885,172 522.9999985694885,112 550.9999980926514,112"
+            },
+            "src": {
+                "port": "result",
+                "process": "saphanaclient1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celoniscloudupload1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "679.9999980926514,121 707.9999976158142,121 707.9999976158142,172 735.999997138977,172"
+            },
+            "src": {
+                "port": "output",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "celonisstatus1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "679.9999980926514,103 707.9999976158142,103 707.9999976158142,52 735.999997138977,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap2"
+            }
+        },
+        {
+            "metadata": {
+                "points": "864.999997138977,172 892.9999966621399,172 892.9999966621399,112 920.9999961853027,112"
+            },
+            "src": {
+                "port": "out",
+                "process": "celonisstatus1"
+            },
+            "tgt": {
+                "port": "stop",
+                "process": "graphterminator1"
+            }
+        }
+    ],
+    "inports": {},
+    "outports": {}
+}
