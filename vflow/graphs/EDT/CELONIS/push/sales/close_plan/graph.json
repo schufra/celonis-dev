@@ -1,0 +1,303 @@
+{
+    "properties": {},
+    "iconsrc": "",
+    "groupResources": {
+        "memory": {
+            "limit": "256Mi"
+        },
+        "cpu": {
+            "limit": "100m"
+        }
+    },
+    "description": "Celonis Close Plan",
+    "processes": {
+        "saphanaclient1": {
+            "component": "com.sap.hana.client2",
+            "metadata": {
+                "label": "SAP HANA (IC*)",
+                "x": 571.9999980926514,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "subengines": [
+                    "main"
+                ],
+                "config": {
+                    "connection": {
+                        "configurationType": "Configuration Manager",
+                        "connectionID": "BWP_DIP"
+                    },
+                    "csvMode": "Stream",
+                    "connectionType": "Insecure (no encryption)",
+                    "csvEmptyFieldValue": "NULL",
+                    "tableColumns": [],
+                    "insertMode": "INSERT",
+                    "initTable": "None",
+                    "inputFormat": "CSV",
+                    "connectionTimeoutInMs": 90000,
+                    "outputInBatches": true,
+                    "outputBatchSize": 5000,
+                    "networkBatchSize": 512,
+                    "decimalOutputFormat": "Floating-point"
+                }
+            }
+        },
+        "constantgenerator1": {
+            "component": "com.sap.util.constantGenerator",
+            "metadata": {
+                "label": "Generate SQL",
+                "x": 17,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {
+                    "counter": 0,
+                    "script": "// constants\nvar onceMode = \"once\";\nvar pulseMode = \"pulse\";\nvar triggerMode = \"trigger\";\nvar validModes = [onceMode, pulseMode, triggerMode];\nvar onceActivatedModes = [onceMode, pulseMode];\n\nvar content = $.config.getString(\"content\");\nvar mode = $.config.getString(\"mode\") || onceMode;\nvar counter = $.config.getInt(\"counter\") || 0;\n\nif (validModes.indexOf(mode) == -1) {\n    $.fail(\"Invalid mode '\" + mode + \"'\");\n}\n\nvar isOnceActivatedMode = onceActivatedModes.indexOf(mode) != -1;\n\nfunction emit() {\n    $.out(content);\n}\n\nfunction tick(ctx) {\n    emit();\n}\n\nif (0 === counter) {\n    switch (mode) {\n        case onceMode:\n            $.addGenerator(tick);\n            break;\n        case pulseMode:\n            $.addTimer($.config.getString(\"duration\"), tick);\n            break;\n    }\n}\n\n$.setPortCallback(\"in\", function(ctx, s) {\n    counter--;\n    if (counter <= 0) {\n        if (isOnceActivatedMode) {\n            if (counter === 0) {\n                switch (mode) {\n                    case onceMode:\n                        emit();\n                        break;\n                    case pulseMode:\n                        $.addTimer($.config.getString(\"duration\"), tick);\n                        break;\n                }\n            }\n        } else {\n            emit();\n        }\n    }\n});\n",
+                    "content": "SELECT hb.ic_object_id AS case_key , Min(To_timestamp(act.created_at)) AS close_plan_create_date , Max(To_timestamp(act.activity_planned_date_to)) AS close_plan_due_date FROM _sys_bic.\"corp.acti.datamart/CL_CORP_ACTI_ACTIVITIES_ALL_BASE\" ('PLACEHOLDER' = ('$$IP_BPARTNER$$', '*'), 'PLACEHOLDER' = ('$$IP_CURRENT_DATE$$', '<<YYYYMMDD>>')) act LEFT OUTER JOIN _sys_bic.\"corp.gspi.core/CL_GSPI_IC_OPPORTUNITY_HEADERBASE\" hb ON hb.ic_guid = act.zpredecessor_opp WHERE act.activity_process_type = 'ZM01' AND act.activity_initiated_by_key IN ('00', '02', '03') AND LEFT(act.zzacvty_code, 1) IN ('A', 'G') GROUP BY hb.ic_object_id",
+                    "mode": "once"
+                }
+            }
+        },
+        "graphterminator1": {
+            "component": "com.sap.util.graphTerminator",
+            "metadata": {
+                "label": "Graph Terminator",
+                "x": 1126.9999952316284,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "config": {}
+            }
+        },
+        "wiretap1": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 941.9999961853027,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "celonispushjobcreator1": {
+            "component": "cloud.celonis.pushJobCreator",
+            "metadata": {
+                "label": "Celonis Push Job Creator",
+                "x": 370.9999990463257,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "realm": "eu-1",
+                    "team": "sap-qa",
+                    "primary_keys": [
+                        "CASE_KEY"
+                    ],
+                    "table_name": "SALES_CLOSE_PLAN",
+                    "is_upsert": false
+                }
+            }
+        },
+        "wiretap2": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 571.9999980926514,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "celonisstatus1": {
+            "component": "EDT.CELONIS.call.status",
+            "metadata": {
+                "label": "Celonis Status",
+                "x": 941.9999961853027,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {}
+            }
+        },
+        "celoniscloudupload1": {
+            "component": "cloud.celonis.pushToCelonisIBC",
+            "metadata": {
+                "label": "Celonis Cloud Upload",
+                "x": 756.999997138977,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "is_upsert": false,
+                    "realm": "eu-1",
+                    "team": "sap-qa",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "column_type_dict": {
+                        "CASE_KEY": "str",
+                        "CLOSE_PLAN": "str",
+                        "CREATED_AT": "datetime64",
+                        "ACTION": "str",
+                        "STATUS_CHG_DATETIME": "datetime64"
+                    }
+                }
+            }
+        },
+        "celonisadjust1": {
+            "component": "EDT.CELONIS.adjust",
+            "metadata": {
+                "label": "Celonis Adjust",
+                "x": 186,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {}
+            }
+        },
+        "wiretap3": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 370.9999990463257,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        }
+    },
+    "groups": [],
+    "connections": [
+        {
+            "metadata": {
+                "points": "494.9999990463257,181 538.9999985694885,181 538.9999985694885,163 566.9999980926514,163"
+            },
+            "src": {
+                "port": "output",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "sql",
+                "process": "saphanaclient1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "494.9999990463257,163 522.9999985694885,163 522.9999985694885,52 566.9999980926514,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap2"
+            }
+        },
+        {
+            "metadata": {
+                "points": "1065.9999961853027,172 1093.9999957084656,172 1093.9999957084656,112 1121.9999952316284,112"
+            },
+            "src": {
+                "port": "out",
+                "process": "celonisstatus1"
+            },
+            "tgt": {
+                "port": "stop",
+                "process": "graphterminator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "695.9999980926514,172 723.9999976158142,172 723.9999976158142,112 751.999997138977,112"
+            },
+            "src": {
+                "port": "result",
+                "process": "saphanaclient1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celoniscloudupload1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "880.999997138977,103 908.9999966621399,103 908.9999966621399,52 936.9999961853027,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "880.999997138977,121 908.9999966621399,121 908.9999966621399,172 936.9999961853027,172"
+            },
+            "src": {
+                "port": "output",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "celonisstatus1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "141,112 181,112"
+            },
+            "src": {
+                "port": "out",
+                "process": "constantgenerator1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celonisadjust1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "310,121 337.99999952316284,121 337.99999952316284,172 365.9999990463257,172"
+            },
+            "src": {
+                "port": "output",
+                "process": "celonisadjust1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celonispushjobcreator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "310,103 337.99999952316284,103 337.99999952316284,52 365.9999990463257,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celonisadjust1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap3"
+            }
+        }
+    ],
+    "inports": {},
+    "outports": {}
+}
