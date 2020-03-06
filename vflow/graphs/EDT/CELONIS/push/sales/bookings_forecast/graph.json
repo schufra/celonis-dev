@@ -1,0 +1,379 @@
+{
+    "properties": {},
+    "iconsrc": "",
+    "groupResources": {
+        "memory": {
+            "limit": "1Gi"
+        },
+        "cpu": {
+            "limit": "100m"
+        }
+    },
+    "description": "Celonis Bookings Forecast",
+    "processes": {
+        "saphanaclient1": {
+            "component": "com.sap.hana.client2",
+            "metadata": {
+                "label": "SAP HANA (IC*)",
+                "x": 72.99999904632568,
+                "y": 192.5,
+                "height": 80,
+                "width": 120,
+                "subengines": [
+                    "main"
+                ],
+                "config": {
+                    "connection": {
+                        "connectionProperties": {
+                            "additionalHosts": [],
+                            "host": "host",
+                            "password": "",
+                            "port": 9000,
+                            "useTLS": false,
+                            "user": ""
+                        },
+                        "configurationType": "Configuration Manager",
+                        "connectionID": "BWP_DIP"
+                    },
+                    "csvMode": "Stream",
+                    "connectionType": "Insecure (no encryption)",
+                    "csvEmptyFieldValue": "NULL",
+                    "tableColumns": [],
+                    "insertMode": "INSERT",
+                    "initTable": "None",
+                    "inputFormat": "CSV",
+                    "networkBatchSize": 5000,
+                    "outputInBatches": true,
+                    "outputBatchSize": 5000,
+                    "connectionTimeoutInMs": 50000,
+                    "decimalOutputFormat": "Floating-point"
+                }
+            }
+        },
+        "graphterminator1": {
+            "component": "com.sap.util.graphTerminator",
+            "metadata": {
+                "label": "Graph Terminator",
+                "x": 844.9999952316284,
+                "y": 192.5,
+                "height": 80,
+                "width": 120,
+                "config": {}
+            }
+        },
+        "wiretap1": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 458.99999713897705,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "wiretap2": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 1045.999994277954,
+                "y": 146.49999976158142,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "celoniscloudupload1": {
+            "component": "cloud.celonis.pushToCelonisIBC",
+            "metadata": {
+                "label": "Celonis Cloud Upload",
+                "x": 257.99999809265137,
+                "y": 177,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "is_upsert": false,
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "realm": "eu-1",
+                    "team": "sap-qa",
+                    "column_type_dict": {
+                        "SNAPSHOT_PERIODS": "str",
+                        "OPPT_ID": "str",
+                        "OPP_STATUS": "str",
+                        "PROFIT_CENTER": "str",
+                        "PRODUCT_ID": "str",
+                        "CM_VERBAL_FC": "float64",
+                        "ADRM_FC": "float64",
+                        "UPSIDE_CC": "float64",
+                        "PROBABLE_CC": "float64"
+                    }
+                }
+            }
+        },
+        "constantgenerator11": {
+            "component": "com.sap.util.constantGenerator",
+            "metadata": {
+                "label": "Generate SQL",
+                "x": 72.99999904632568,
+                "y": 72.5,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {
+                    "counter": 0,
+                    "script": "// constants\nvar onceMode = \"once\";\nvar pulseMode = \"pulse\";\nvar triggerMode = \"trigger\";\nvar validModes = [onceMode, pulseMode, triggerMode];\nvar onceActivatedModes = [onceMode, pulseMode];\n\nvar content = $.config.getString(\"content\");\nvar mode = $.config.getString(\"mode\") || onceMode;\nvar counter = $.config.getInt(\"counter\") || 0;\n\nif (validModes.indexOf(mode) == -1) {\n    $.fail(\"Invalid mode '\" + mode + \"'\");\n}\n\nvar isOnceActivatedMode = onceActivatedModes.indexOf(mode) != -1;\n\nfunction emit() {\n    $.out(content);\n}\n\nfunction tick(ctx) {\n    emit();\n}\n\nif (0 === counter) {\n    switch (mode) {\n        case onceMode:\n            $.addGenerator(tick);\n            break;\n        case pulseMode:\n            $.addTimer($.config.getString(\"duration\"), tick);\n            break;\n    }\n}\n\n$.setPortCallback(\"in\", function(ctx, s) {\n    counter--;\n    if (counter <= 0) {\n        if (isOnceActivatedMode) {\n            if (counter === 0) {\n                switch (mode) {\n                    case onceMode:\n                        emit();\n                        break;\n                    case pulseMode:\n                        $.addTimer($.config.getString(\"duration\"), tick);\n                        break;\n                }\n            }\n        } else {\n            emit();\n        }\n    }\n});\n",
+                    "content": "select SNAPSHOT_PERIODS from  (SELECT DISTINCT \"SNAPSHOT_PERIODS\" FROM \"_SYS_BIC\".\"corp.gssv.datamart/CL_GSSV_IC_SERVICES_SALES_FORECAST_SNAPSHOTS\" ('PLACEHOLDER' = ('$$IP_CURRENCY$$', 'EUR'),  'PLACEHOLDER' = ('$$IP_ILP_FLAG$$', 'N'),  'PLACEHOLDER' = ('$$P_VERSION$$', 'CURRENT'),  'PLACEHOLDER' = ('$$IP_SNAPSHOT_DATE_DUMMY$$', 'ALLSNAPSHOT'))  ORDER BY \"SNAPSHOT_PERIODS\" DESC) where SNAPSHOT_PERIODS like 'MO %'  and  substr(SNAPSHOT_PERIODS, 4, 4) >= year(add_years(current_date, -2)) order by SNAPSHOT_PERIODS",
+                    "mode": "once"
+                }
+            },
+            "name": "constantgenerator1"
+        },
+        "saphanaclient2": {
+            "component": "com.sap.hana.client2",
+            "metadata": {
+                "label": "SAP HANA Client",
+                "x": 458.99999713897705,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "config": {
+                    "connection": {
+                        "connectionProperties": {
+                            "additionalHosts": [],
+                            "host": "host",
+                            "password": "",
+                            "port": 9000,
+                            "useTLS": false,
+                            "user": ""
+                        },
+                        "configurationType": "Configuration Manager",
+                        "connectionID": "BWP_DIP"
+                    },
+                    "decimalOutputFormat": "Floating-point",
+                    "connectionTimeoutInMs": 50000
+                }
+            }
+        },
+        "tomessageconverter2": {
+            "component": "com.sap.util.toMessageConverter",
+            "metadata": {
+                "label": "ToMessage Converter",
+                "x": 292.49999809265137,
+                "y": 87,
+                "height": 50,
+                "width": 50,
+                "config": {}
+            }
+        },
+        "messageoperator1": {
+            "component": "com.sap.system.jsmengine",
+            "metadata": {
+                "label": "Message Operator",
+                "x": 659.9999961853027,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {
+                    "sql": "SELECT SNAPSHOT_PERIODS, OPP_ID as OPPT_ID, OPP_STATUS, PROFIT_CENTER, PRODUCT_ID, CM_VERBAL_FC, ADRM_FC, UPSIDE_CC, PROBABLE_CC FROM \"_SYS_BIC\".\"corp.gssv.datamart/CL_GSSV_IC_SERVICES_SALES_FORECAST_SNAPSHOTS\"('PLACEHOLDER' = ('$$IP_CURRENCY$$', 'EUR'), 'PLACEHOLDER' = ('$$IP_ILP_FLAG$$', 'N'), 'PLACEHOLDER' = ('$$P_VERSION$$', 'CURRENT'), 'PLACEHOLDER' = ('$$IP_SNAPSHOT_DATE$$', '<<MO YYYY-MM>>')) where OPP_ID <> '0'",
+                    "script": "var cntr = 0;\nvar months = [];\nvar mon = \"\";\n\nfunction sleepFor( sleepDuration ){\n    var now = new Date().getTime();\n    while(new Date().getTime() < now + sleepDuration){ /* do nothing */ } \n}\n\nfunction getData() {\n  var msg = {};\n  msg.Attributes = {};\n  mon = \"\";\n\n  // Check to see if we still have months to process\n  if (Array.isArray(months)) {\n    if(typeof months.slice()[cntr]!== \"undefined\" && months.slice()[cntr] !== null) {\n      mon = months.slice()[cntr][\"SNAPSHOT_PERIODS\"];\n      msg.Body = $.config.getString(\"sql\").replace( /<<MO YYYY-MM>>/g, mon ).replace(/\\\\/g, '');  \n\n      if (cntr === 0) {  \n        msg.Attributes[\"is_upsert\"] = false;\n      } else {\n        msg.Attributes[\"is_upsert\"] = true;\n      }\n    } else {\n      $.stop(\"now!\"); // Causes the graph to terminate.\n    }\n  }\n\n  cntr+=1;\n  \n  return msg;\n}\n\nfunction loop(status) {\n  // check status from Celonis\n  if (status == \"exception\") {\n    $.stop( \"Celonis Exception\" ); // Causes the graph to terminate.\n  }\n\n  $.output(getData());\n}\n\nfunction first(ctx, s) {\n  months = s.Body;\n\n  $.output(getData());\n}\n\nfunction start() {\n    return \"start\";\n}\n\n$.addGenerator(start);\n$.setPortCallback(\"input\", first);\n$.setPortCallback(\"loop\", loop);"
+                },
+                "additionalinports": [
+                    {
+                        "name": "loop",
+                        "type": "string"
+                    }
+                ],
+                "additionaloutports": [
+                    {
+                        "name": "stop",
+                        "type": "string"
+                    }
+                ]
+            }
+        },
+        "celonisstatus1": {
+            "component": "EDT.CELONIS.call.status",
+            "metadata": {
+                "label": "Celonis Status",
+                "x": 458.99999713897705,
+                "y": 252,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {}
+            }
+        },
+        "celonispushjobcreator1": {
+            "component": "cloud.celonis.pushJobCreator",
+            "metadata": {
+                "label": "Celonis Push Job Creator",
+                "x": 844.9999952316284,
+                "y": 72.5,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "is_upsert": false,
+                    "realm": "eu-1",
+                    "team": "sap-qa",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "table_name": "BOOKINGS_FORECAST"
+                }
+            }
+        }
+    },
+    "groups": [],
+    "connections": [
+        {
+            "metadata": {
+                "points": "381.99999809265137,208 409.9999976158142,208 409.9999976158142,172 453.99999713897705,172"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "196.99999904632568,112.5 224.99999856948853,112.5 224.99999856948853,121 287.49999809265137,121"
+            },
+            "src": {
+                "port": "out",
+                "process": "constantgenerator11"
+            },
+            "tgt": {
+                "port": "instring",
+                "process": "tomessageconverter2"
+            }
+        },
+        {
+            "metadata": {
+                "points": "346.49999809265137,112 409.9999976158142,112 409.9999976158142,43 453.99999713897705,43"
+            },
+            "src": {
+                "port": "out",
+                "process": "tomessageconverter2"
+            },
+            "tgt": {
+                "port": "sql",
+                "process": "saphanaclient2"
+            }
+        },
+        {
+            "metadata": {
+                "points": "783.9999961853027,181 811.9999957084656,181 811.9999957084656,232.5 839.9999952316284,232.5"
+            },
+            "src": {
+                "port": "stop",
+                "process": "messageoperator1"
+            },
+            "tgt": {
+                "port": "stop",
+                "process": "graphterminator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "582.999997138977,52 610.9999966621399,52 610.9999966621399,163 654.9999961853027,163"
+            },
+            "src": {
+                "port": "result",
+                "process": "saphanaclient2"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "messageoperator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "381.99999809265137,226 425.9999976158142,226 425.9999976158142,292 453.99999713897705,292"
+            },
+            "src": {
+                "port": "output",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "celonisstatus1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "968.9999952316284,103.5 1012.9999947547913,103.5 1012.9999947547913,186.49999976158142 1040.999994277954,186.49999976158142"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap2"
+            }
+        },
+        {
+            "metadata": {
+                "points": "783.9999961853027,163 811.9999957084656,163 811.9999957084656,112.5 839.9999952316284,112.5"
+            },
+            "src": {
+                "port": "output",
+                "process": "messageoperator1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celonispushjobcreator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "196.99999904632568,232.5 224.99999856948853,232.5 224.99999856948853,217 252.99999809265137,217"
+            },
+            "src": {
+                "port": "result",
+                "process": "saphanaclient1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celoniscloudupload1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "968.9999952316284,121.5 996.9999947547913,121.5 996.9999947547913,300.49999952316284 811.9999957084656,300.49999952316284 811.9999957084656,239.99999952316284 626.9999966621399,239.99999952316284 626.9999966621399,359.99999952316284 409.9999976158142,359.99999952316284 409.9999976158142,284.99999952316284 224.99999856948853,284.99999952316284 224.99999856948853,300.49999952316284 12,300.49999952316284 12,223.5 67.99999904632568,223.5"
+            },
+            "src": {
+                "port": "output",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "sql",
+                "process": "saphanaclient1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "582.999997138977,292 610.9999966621399,292 610.9999966621399,181 654.9999961853027,181"
+            },
+            "src": {
+                "port": "out",
+                "process": "celonisstatus1"
+            },
+            "tgt": {
+                "port": "loop",
+                "process": "messageoperator1"
+            }
+        }
+    ],
+    "inports": {},
+    "outports": {}
+}
