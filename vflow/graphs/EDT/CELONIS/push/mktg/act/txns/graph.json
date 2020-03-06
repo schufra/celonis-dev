@@ -1,0 +1,296 @@
+{
+    "properties": {},
+    "iconsrc": "",
+    "description": "Celonis Activity",
+    "processes": {
+        "saphanaclient1": {
+            "component": "com.sap.hana.client2",
+            "metadata": {
+                "label": "SAP HANA (IC*)",
+                "x": 485.99999809265137,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "subengines": [
+                    "main"
+                ],
+                "config": {
+                    "connection": {
+                        "connectionProperties": {
+                            "additionalHosts": [],
+                            "host": "host",
+                            "password": "",
+                            "port": 9000,
+                            "useTLS": false,
+                            "user": ""
+                        },
+                        "configurationType": "Configuration Manager",
+                        "connectionID": "BWP_DIP"
+                    },
+                    "csvMode": "Stream",
+                    "connectionType": "Insecure (no encryption)",
+                    "csvEmptyFieldValue": "NULL",
+                    "tableColumns": [],
+                    "insertMode": "INSERT",
+                    "initTable": "None",
+                    "inputFormat": "CSV",
+                    "outputInBatches": true,
+                    "outputBatchSize": 5000,
+                    "networkBatchSize": 512,
+                    "connectionTimeoutInMs": 50000,
+                    "decimalOutputFormat": "Floating-point"
+                }
+            }
+        },
+        "constantgenerator1": {
+            "component": "com.sap.util.constantGenerator",
+            "metadata": {
+                "label": "Generate SQL",
+                "x": 17,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {
+                    "counter": 0,
+                    "script": "// constants\nvar onceMode = \"once\";\nvar pulseMode = \"pulse\";\nvar triggerMode = \"trigger\";\nvar validModes = [onceMode, pulseMode, triggerMode];\nvar onceActivatedModes = [onceMode, pulseMode];\n\nvar content = $.config.getString(\"content\");\nvar mode = $.config.getString(\"mode\") || onceMode;\nvar counter = $.config.getInt(\"counter\") || 0;\n\nif (validModes.indexOf(mode) == -1) {\n    $.fail(\"Invalid mode '\" + mode + \"'\");\n}\n\nvar isOnceActivatedMode = onceActivatedModes.indexOf(mode) != -1;\n\nfunction emit() {\n    $.out(content);\n}\n\nfunction tick(ctx) {\n    emit();\n}\n\nif (0 === counter) {\n    switch (mode) {\n        case onceMode:\n            $.addGenerator(tick);\n            break;\n        case pulseMode:\n            $.addTimer($.config.getString(\"duration\"), tick);\n            break;\n    }\n}\n\n$.setPortCallback(\"in\", function(ctx, s) {\n    counter--;\n    if (counter <= 0) {\n        if (isOnceActivatedMode) {\n            if (counter === 0) {\n                switch (mode) {\n                    case onceMode:\n                        emit();\n                        break;\n                    case pulseMode:\n                        $.addTimer($.config.getString(\"duration\"), tick);\n                        break;\n                }\n            }\n        } else {\n            emit();\n        }\n    }\n});\n",
+                    "content": "select distinct ACTIVITY_ID as CASE_KEY,  to_varchar(localtoutc(CREATED_AT_CET, 'CET'), 'yyyy-mm-dd hh24:mi:ss') as CREATED_ON, case when ACTIVITY_CREATED_BY like_regexpr '^[I|C|D]([0-9]{6,7})$' FLAG 'i' then 'USER' else 'AUTO' end as CREATED_BY, ACTIVITY_PROCESS_TYPE as PROCESS_TYPE, ACTIVITY_STATUS as STATUS, ACTIVITY_INITIATED_BY as INITIATOR, CO_COMPANY_ID as ACCOUNT, CAMP_CAMPAIGN_ID as CAMPAIGN, CAMP_CAMPAIGNTYPE as CAMPAIGN_TYPE, CAMP_OBJECTIVE as CAMPAIGN_SUBTYPE, SALESBAG_LVL3 as SALES_BAG_LVL_3, DISTRIBUTION_CHANNEL_DESCRIPTION as DIS_CHANNEL, ACTIVITY_DIVISION as DIVISION, ACTIVITY_SALES_ORG as SALES_ORG, SALES_SALES_GROUP as SALES_GROUP, CAMP_MARKETING_SEGMENT as MKT_SEGMENT, CO_REGIONAL_BUYING_CLASSIFICATION as GTM_BUY_REG, CO_MASTERCODE as SAP_MASTER, CO_COUNTRY as COUNTRY, SALES_SAP_REGION as REGION, SALES_BU_HUB_CNTRY as SUBREGION, SALES_MU_CNTRY_SUPER_REG as MKT_UNIT, ACTIVITY_REASON as REASON from _SYS_BIC.\"corp.gmar.core.activities/CL_GMAR_ACTIVITIES_AN\" where ACTIVITY_CREATION_DATE >= add_days(add_years(current_date,-2),-dayofyear(add_years(current_date,-2))+1) and ACTIVITY_PROCESS_TYPE = 'ZM01'",
+                    "mode": "once"
+                }
+            }
+        },
+        "tomessageconverter1": {
+            "component": "com.sap.util.toMessageConverter",
+            "metadata": {
+                "label": "ToMessage Converter",
+                "x": 201.99999904632568,
+                "y": 87,
+                "height": 50,
+                "width": 50,
+                "config": {}
+            }
+        },
+        "wiretap1": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 855.9999961853027,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "celonispushjobcreator1": {
+            "component": "cloud.celonis.pushJobCreator",
+            "metadata": {
+                "label": "Celonis Push Job Creator",
+                "x": 300.9999990463257,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "is_upsert": false,
+                    "realm": "eu-1",
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "team": "sap-qa",
+                    "primary_keys": [
+                        "CASE_KEY"
+                    ],
+                    "table_name": "ACTIVITY"
+                }
+            }
+        },
+        "celoniscloudupload1": {
+            "component": "cloud.celonis.pushToCelonisIBC",
+            "metadata": {
+                "label": "Celonis Cloud Upload",
+                "x": 670.999997138977,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "realm": "eu-1",
+                    "team": "sap-qa",
+                    "is_upsert": false,
+                    "message.lastBatch": true,
+                    "column_type_dict": {
+                        "CASE_KEY": "str",
+                        "CREATED_ON": "datetime64",
+                        "CREATED_BY": "str",
+                        "PROCESS_TYPE": "str",
+                        "STATUS": "str",
+                        "INITIATOR": "str",
+                        "ACCOUNT": "str",
+                        "CAMPAIGN": "str",
+                        "CAMPAIGN_TYPE": "str",
+                        "CAMPAIGN_SUBTYPE": "str",
+                        "SALES_BAG_LVL_3": "str",
+                        "DIS_CHANNEL": "str",
+                        "DIVISION": "str",
+                        "SALES_ORG": "str",
+                        "SALES_GROUP": "str",
+                        "MKT_SEGMENT": "str",
+                        "GTM_BUY_REG": "str",
+                        "SAP_MASTER": "str",
+                        "COUNTRY": "str",
+                        "REGION": "str",
+                        "SUBREGION": "str",
+                        "MKT_UNIT": "str",
+                        "REASON": "str"
+                    }
+                }
+            }
+        },
+        "wiretap2": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 485.99999809265137,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "graphterminator1": {
+            "component": "com.sap.util.graphTerminator",
+            "metadata": {
+                "label": "Graph Terminator",
+                "x": 1040.9999952316284,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "config": {}
+            }
+        },
+        "celonisstatus1": {
+            "component": "EDT.CELONIS.call.status",
+            "metadata": {
+                "label": "Celonis Status",
+                "x": 855.9999961853027,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {}
+            }
+        }
+    },
+    "groups": [],
+    "connections": [
+        {
+            "metadata": {
+                "points": "141,112 168.99999952316284,112 168.99999952316284,121 196.99999904632568,121"
+            },
+            "src": {
+                "port": "out",
+                "process": "constantgenerator1"
+            },
+            "tgt": {
+                "port": "instring",
+                "process": "tomessageconverter1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "424.9999990463257,121 452.9999985694885,121 452.9999985694885,163 480.99999809265137,163"
+            },
+            "src": {
+                "port": "output",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "sql",
+                "process": "saphanaclient1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "794.999997138977,103 822.9999966621399,103 822.9999966621399,52 850.9999961853027,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "424.9999990463257,103 452.9999985694885,103 452.9999985694885,52 480.99999809265137,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap2"
+            }
+        },
+        {
+            "metadata": {
+                "points": "255.99999904632568,112 295.9999990463257,112"
+            },
+            "src": {
+                "port": "out",
+                "process": "tomessageconverter1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celonispushjobcreator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "609.9999980926514,172 637.9999976158142,172 637.9999976158142,112 665.999997138977,112"
+            },
+            "src": {
+                "port": "result",
+                "process": "saphanaclient1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celoniscloudupload1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "794.999997138977,121 822.9999966621399,121 822.9999966621399,172 850.9999961853027,172"
+            },
+            "src": {
+                "port": "output",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "celonisstatus1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "979.9999961853027,172 1007.9999957084656,172 1007.9999957084656,112 1035.9999952316284,112"
+            },
+            "src": {
+                "port": "out",
+                "process": "celonisstatus1"
+            },
+            "tgt": {
+                "port": "stop",
+                "process": "graphterminator1"
+            }
+        }
+    ],
+    "inports": {},
+    "outports": {}
+}
