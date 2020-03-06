@@ -1,0 +1,278 @@
+{
+    "properties": {},
+    "iconsrc": "",
+    "groupResources": {
+        "memory": {
+            "limit": "256Mi"
+        },
+        "cpu": {
+            "limit": "100m"
+        }
+    },
+    "description": "Celonis O2C Quote Status",
+    "processes": {
+        "saphanaclient1": {
+            "component": "com.sap.hana.client2",
+            "metadata": {
+                "label": "SAP HANA (IC*)",
+                "x": 485.99999809265137,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "subengines": [
+                    "main"
+                ],
+                "config": {
+                    "connection": {
+                        "connectionProperties": {
+                            "additionalHosts": [],
+                            "host": "host",
+                            "password": "",
+                            "port": 9000,
+                            "useTLS": false,
+                            "user": ""
+                        },
+                        "configurationType": "Configuration Manager",
+                        "connectionID": "ISP_DIP"
+                    },
+                    "csvMode": "Stream",
+                    "connectionType": "Insecure (no encryption)",
+                    "csvEmptyFieldValue": "NULL",
+                    "tableColumns": [],
+                    "insertMode": "INSERT",
+                    "initTable": "None",
+                    "inputFormat": "CSV",
+                    "outputInBatches": true,
+                    "outputBatchSize": 5000,
+                    "networkBatchSize": 5000,
+                    "connectionTimeoutInMs": 10000,
+                    "tableName": "O2C_QUOTE_STATUS",
+                    "decimalOutputFormat": "Floating-point"
+                }
+            }
+        },
+        "constantgenerator1": {
+            "component": "com.sap.util.constantGenerator",
+            "metadata": {
+                "label": "Generate SQL",
+                "x": 17,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {
+                    "counter": 0,
+                    "script": "// constants\nvar onceMode = \"once\";\nvar pulseMode = \"pulse\";\nvar triggerMode = \"trigger\";\nvar validModes = [onceMode, pulseMode, triggerMode];\nvar onceActivatedModes = [onceMode, pulseMode];\n\nvar content = $.config.getString(\"content\");\nvar mode = $.config.getString(\"mode\") || onceMode;\nvar counter = $.config.getInt(\"counter\") || 0;\n\nif (validModes.indexOf(mode) == -1) {\n    $.fail(\"Invalid mode '\" + mode + \"'\");\n}\n\nvar isOnceActivatedMode = onceActivatedModes.indexOf(mode) != -1;\n\nfunction emit() {\n    $.out(content);\n}\n\nfunction tick(ctx) {\n    emit();\n}\n\nif (0 === counter) {\n    switch (mode) {\n        case onceMode:\n            $.addGenerator(tick);\n            break;\n        case pulseMode:\n            $.addTimer($.config.getString(\"duration\"), tick);\n            break;\n    }\n}\n\n$.setPortCallback(\"in\", function(ctx, s) {\n    counter--;\n    if (counter <= 0) {\n        if (isOnceActivatedMode) {\n            if (counter === 0) {\n                switch (mode) {\n                    case onceMode:\n                        emit();\n                        break;\n                    case pulseMode:\n                        $.addTimer($.config.getString(\"duration\"), tick);\n                        break;\n                }\n            }\n        } else {\n            emit();\n        }\n    }\n});\n",
+                    "content": "SELECT DISTINCT zz.object_id AS QUOTE_ID, Substr(p.display_name, 7, Length(p.display_name) - 7) AS CMS_CASE_ID, CASE WHEN ( p.arg1 = 'REQU' ) THEN 'Ready for Booking' WHEN ( p.arg1 = 'REJE' ) THEN 'Clarification Requested' WHEN ( p.arg1 = 'INPR' ) THEN 'Booking In Progress' WHEN ( p.arg1 = 'ZCC1' ) THEN 'Contract Creation In Process' WHEN ( p.arg1 = 'ZCC2' ) THEN 'Contract Creation Suspended' WHEN ( p.arg1 = 'ZCC3' ) THEN 'Contract in review by Legal' WHEN ( p.arg1 = 'ZCC4' ) THEN 'Contract in review by RevRec' WHEN ( p.arg1 = 'ZCC5' ) THEN 'Contract in review by Sales' WHEN ( p.arg1 = 'ZCC6' ) THEN 'Contract in approval' WHEN ( p.arg1 = 'ZCC8' ) THEN 'Work@Risk' WHEN ( p.arg1 = 'ZCC9' ) THEN 'Released for Booking with Exception' WHEN ( p.arg1 = 'ZCC7' ) THEN 'Signed Contract in Validation' WHEN ( p.arg1 = 'REST' ) THEN 'Clarification Done' WHEN ( p.arg1 = 'COMP' ) THEN 'Booked and Invoiced' WHEN ( p.arg1 = 'ZO2C' ) THEN 'O2C validation' WHEN ( p.arg1 = 'ZC10' ) THEN 'Contract Support Requested' WHEN ( p.arg1 = 'ZC11' ) THEN 'Work@Risk Requested' WHEN ( p.arg1 = 'ZC12' ) THEN 'Work@Risk Created' WHEN ( p.arg1 = 'ZC13' ) THEN 'With Deal Support' ELSE p.arg1 END AS CMS_PREVIOUS_STATUS, CASE WHEN ( p.arg2 = 'REQU' ) THEN 'Ready for Booking' WHEN ( p.arg2 = 'REJE' ) THEN 'Clarification Requested' WHEN ( p.arg2 = 'INPR' ) THEN 'Booking In Progress' WHEN ( p.arg2 = 'ZCC1' ) THEN 'Contract Creation In Process' WHEN ( p.arg2 = 'ZCC2' ) THEN 'Contract Creation Suspended' WHEN ( p.arg2 = 'ZCC3' ) THEN 'Contract in review by Legal' WHEN ( p.arg2 = 'ZCC4' ) THEN 'Contract in review by RevRec' WHEN ( p.arg2 = 'ZCC5' ) THEN 'Contract in review by Sales' WHEN ( p.arg2 = 'ZCC6' ) THEN 'Contract in approval' WHEN ( p.arg2 = 'ZCC8' ) THEN 'Work@Risk' WHEN ( p.arg2 = 'ZCC9' ) THEN 'Released for Booking with Exception' WHEN ( p.arg2 = 'ZCC7' ) THEN 'Signed Contract in Validation' WHEN ( p.arg2 = 'REST' ) THEN 'Clarification Done' WHEN ( p.arg2 = 'COMP' ) THEN 'Booked and Invoiced' WHEN ( p.arg2 = 'ZO2C' ) THEN 'O2C validation' WHEN ( p.arg2 = 'ZC10' ) THEN 'Contract Support Requested' WHEN ( p.arg2 = 'ZC11' ) THEN 'Work@Risk Requested' WHEN ( p.arg2 = 'ZC12' ) THEN 'Work@Risk Created' WHEN ( p.arg2 = 'ZC13' ) THEN 'With Deal Support' ELSE p.arg2 END AS CMS_STATUS, To_timestamp(To_nvarchar(Floor(p.timestamp)), 'YYYYMMDDHH24MISS') AS STATUS_CHANGE_TIME, z.callidus_flag, z.C4C_FLAG, case when z.CREATED_BY like_regexpr '^[I|C|D]([0-9]  {6,7} )$' FLAG 'i' then 'USER' else z.CREATED_BY end CREATED_BY ,z.SALES_ORG FROM sapisp.srmrmspdir_clnt c INNER JOIN sapisp.srmprotocol p ON c.poidid = p.poid_id AND c.mandt = p.mandt LEFT OUTER JOIN sapisp.zzv_v_rcmgen_dbv z ON Ltrim(z.ext_key, '0') = Substr(p.display_name, 7, Length(p.display_name) - 7) JOIN sapisp.zzv_d_rcmgen_ol zz ON ( zz.case_guid = z.case_guid ) WHERE c.state = 'A' AND To_nvarchar(p.arg_string) = 'OMS-Tracking' and to_timestamp(to_nvarchar(floor(p.TIMESTAMP)),'YYYYMMDDHH24MISS')>= add_days(add_years(current_timestamp,-2),-dayofyear(add_years(current_timestamp,-2))+1)",
+                    "mode": "once"
+                }
+            }
+        },
+        "tomessageconverter1": {
+            "component": "com.sap.util.toMessageConverter",
+            "metadata": {
+                "label": "ToMessage Converter",
+                "x": 201.99999904632568,
+                "y": 87,
+                "height": 50,
+                "width": 50,
+                "config": {}
+            }
+        },
+        "wiretap1": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 855.9999961853027,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "celonispushjobcreator1": {
+            "component": "cloud.celonis.pushJobCreator",
+            "metadata": {
+                "label": "Celonis Push Job Creator",
+                "x": 300.9999990463257,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "is_upsert": false,
+                    "realm": "eu-1",
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "team": "sap-qa",
+                    "primary_keys": [],
+                    "table_name": "O2C_QUOTE_STATUS"
+                }
+            }
+        },
+        "celoniscloudupload1": {
+            "component": "cloud.celonis.pushToCelonisIBC",
+            "metadata": {
+                "label": "Celonis Cloud Upload",
+                "x": 670.999997138977,
+                "y": 92,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "realm": "eu-1",
+                    "team": "sap-qa",
+                    "is_upsert": false,
+                    "message.lastBatch": true
+                }
+            }
+        },
+        "wiretap2": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 485.99999809265137,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "graphterminator1": {
+            "component": "com.sap.util.graphTerminator",
+            "metadata": {
+                "label": "Graph Terminator",
+                "x": 1040.9999952316284,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "config": {}
+            }
+        },
+        "celonisstatus1": {
+            "component": "EDT.CELONIS.call.status",
+            "metadata": {
+                "label": "Celonis Status",
+                "x": 855.9999961853027,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {}
+            }
+        }
+    },
+    "groups": [],
+    "connections": [
+        {
+            "metadata": {
+                "points": "141,112 168.99999952316284,112 168.99999952316284,121 196.99999904632568,121"
+            },
+            "src": {
+                "port": "out",
+                "process": "constantgenerator1"
+            },
+            "tgt": {
+                "port": "instring",
+                "process": "tomessageconverter1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "424.9999990463257,121 452.9999985694885,121 452.9999985694885,163 480.99999809265137,163"
+            },
+            "src": {
+                "port": "output",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "sql",
+                "process": "saphanaclient1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "794.999997138977,123 823,123 823,52 850.9999961853027,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "424.9999990463257,103 452.9999985694885,103 452.9999985694885,52 480.99999809265137,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap2"
+            }
+        },
+        {
+            "metadata": {
+                "points": "255.99999904632568,112 295.9999990463257,112"
+            },
+            "src": {
+                "port": "out",
+                "process": "tomessageconverter1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celonispushjobcreator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "609.9999980926514,172 638,172 638,132 665.999997138977,132"
+            },
+            "src": {
+                "port": "result",
+                "process": "saphanaclient1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celoniscloudupload1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "794.999997138977,141 823,141 823,172 850.9999961853027,172"
+            },
+            "src": {
+                "port": "output",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "celonisstatus1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "979.9999961853027,172 1007.9999957084656,172 1007.9999957084656,112 1035.9999952316284,112"
+            },
+            "src": {
+                "port": "out",
+                "process": "celonisstatus1"
+            },
+            "tgt": {
+                "port": "stop",
+                "process": "graphterminator1"
+            }
+        }
+    ],
+    "inports": {},
+    "outports": {}
+}
