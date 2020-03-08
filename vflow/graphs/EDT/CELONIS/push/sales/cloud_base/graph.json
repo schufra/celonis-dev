@@ -63,7 +63,7 @@
                 "config": {}
             }
         },
-        "celoniscloudupload2": {
+        "celoniscloudupload1": {
             "component": "cloud.celonis.pushToCelonisIBC",
             "metadata": {
                 "label": "Celonis Cloud Upload",
@@ -77,7 +77,6 @@
                     "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
                     "realm": "eu-1",
                     "team": "sap-qa",
-                    "is_upsert": false,
                     "column_type_dict": {
                         "CASE_KEY": "str",
                         "CM_REVENUE_ACV_SUM": "float64",
@@ -191,19 +190,6 @@
         },
         {
             "metadata": {
-                "points": "794.999997138977,103 822.9999966621399,103 822.9999966621399,52 850.9999961853027,52"
-            },
-            "src": {
-                "port": "debug",
-                "process": "celoniscloudupload2"
-            },
-            "tgt": {
-                "port": "in",
-                "process": "wiretap1"
-            }
-        },
-        {
-            "metadata": {
                 "points": "424.9999990463257,121 452.9999985694885,121 452.9999985694885,163 480.99999809265137,163"
             },
             "src": {
@@ -213,19 +199,6 @@
             "tgt": {
                 "port": "sql",
                 "process": "saphanaclient1"
-            }
-        },
-        {
-            "metadata": {
-                "points": "794.999997138977,121 822.9999966621399,121 822.9999966621399,172 850.9999961853027,172"
-            },
-            "src": {
-                "port": "output",
-                "process": "celoniscloudupload2"
-            },
-            "tgt": {
-                "port": "in",
-                "process": "celonisstatus1"
             }
         },
         {
@@ -277,7 +250,33 @@
             },
             "tgt": {
                 "port": "input",
-                "process": "celoniscloudupload2"
+                "process": "celoniscloudupload1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "794.999997138977,103 822.9999966621399,103 822.9999966621399,52 850.9999961853027,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "794.999997138977,121 822.9999966621399,121 822.9999966621399,172 850.9999961853027,172"
+            },
+            "src": {
+                "port": "output",
+                "process": "celoniscloudupload1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "celonisstatus1"
             }
         }
     ],
