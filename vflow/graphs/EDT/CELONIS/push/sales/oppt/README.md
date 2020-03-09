@@ -3,14 +3,16 @@ EDT.CELONIS.push.sales.oppt
 
 
 ## Change Log
-|   Date        |   Version |   User-ID     |   Comment     |
-|   :--         |   :--     |   :--         |   :--         |
+|   Date        |   Version |   User-ID     |   Comment                                             |
+|   :--         |   :--     |   :--         |   :--                                                 |
 |   15.11.2019  |   2.2.0   |   C5215227    |   Upgraded to Celonis Operator 0.8.3 and retested.    |
-|   15.11.2019  |   2.2.1   |   C5215227    |   Documented workflow.    |
-|   16.12.2019  |   2.2.2   |   C5215227    |   Updated, retested and redocumented workfow.    |
-|   23.02.2020  |   3.0.0   |   C5215227    |   Retrieved from Tenant Workspace.    |
-|   23.02.2020  |   3.0.1   |   C5215227    |   Added resource restrictions.    |
-|   24.02.2020  |   3.0.2   |   C5215227    |   Validated against SharePoint.    |
+|   15.11.2019  |   2.2.1   |   C5215227    |   Documented workflow.                                |
+|   16.12.2019  |   2.2.2   |   C5215227    |   Updated, retested and redocumented workfow.         |
+|   23.02.2020  |   3.0.0   |   C5215227    |   Retrieved from Tenant Workspace.                    |
+|   23.02.2020  |   3.0.1   |   C5215227    |   Added resource restrictions.                        |
+|   24.02.2020  |   3.0.2   |   C5215227    |   Validated against SharePoint.                       |
+|   09.03.2020  |   4.0.0   |   C5215227    |   Updated to the new Celonis template.                |
+
 
 ## Description
 Reads order information from CRM and stores it in Celonis from the past 2 years up to today where process type is:
