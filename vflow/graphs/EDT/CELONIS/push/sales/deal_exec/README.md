@@ -3,14 +3,16 @@ EDT.CELONIS.push.sales.deal_exec
 
 
 ## Change Log
-|   Date        |   Version |   User-ID     |   Comment     |
-|   :--         |   :--     |   :--         |   :--         |
+|   Date        |   Version |   User-ID     |   Comment                                             |
+|   :--         |   :--     |   :--         |   :--                                                 |
 |   14.11.2019  |   2.2.0   |   C5215227    |   Upgraded to Celonis Operator 0.8.3 and retested.    |
-|   14.11.2019  |   2.2.1   |   C5215227    |   Documented workflow.    |
-|   16.12.2019  |   2.2.2   |   C5215227    |   Updated, retested and re-documented workflow.    |
-|   23.02.2020  |   3.0.0   |   C5215227    |   Retrieved from Tenant Workspace.    |
-|   23.02.2020  |   3.0.1   |   C5215227    |   Added resource restrictions.    |
-|   24.02.2020  |   3.0.2   |   C5215227    |   Validated against SharePoint.    |
+|   14.11.2019  |   2.2.1   |   C5215227    |   Documented workflow.                                |
+|   16.12.2019  |   2.2.2   |   C5215227    |   Updated, retested and re-documented workflow.       |
+|   23.02.2020  |   3.0.0   |   C5215227    |   Retrieved from Tenant Workspace.                    |
+|   23.02.2020  |   3.0.1   |   C5215227    |   Added resource restrictions.                        |
+|   24.02.2020  |   3.0.2   |   C5215227    |   Validated against SharePoint.                       |
+|   09.03.2020  |   4.0.0   |   C5215227    |   Updated to the new Celonis template.                |
+
 
 ## Description
 Reads deal execution information from a parameterised calculation view from BW and stores it in Celonis.
