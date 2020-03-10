@@ -1,0 +1,360 @@
+{
+    "properties": {},
+    "iconsrc": "",
+    "groupResources": {
+        "memory": {
+            "limit": "256Mi"
+        },
+        "cpu": {
+            "limit": "100m"
+        }
+    },
+    "description": "Celonis Slipped Sales",
+    "processes": {
+        "saphanaclient1": {
+            "component": "com.sap.hana.client2",
+            "metadata": {
+                "label": "SAP HANA (IC*)",
+                "x": 1198.9999933242798,
+                "y": 132.5,
+                "height": 80,
+                "width": 120,
+                "subengines": [
+                    "main"
+                ],
+                "config": {
+                    "connection": {
+                        "connectionProperties": {
+                            "additionalHosts": [],
+                            "host": "host",
+                            "password": "",
+                            "port": 9000,
+                            "useTLS": false,
+                            "user": ""
+                        },
+                        "configurationType": "Configuration Manager",
+                        "connectionID": "BWP_DIP"
+                    },
+                    "csvMode": "Stream",
+                    "connectionType": "Insecure (no encryption)",
+                    "csvEmptyFieldValue": "NULL",
+                    "tableColumns": [],
+                    "insertMode": "INSERT",
+                    "initTable": "None",
+                    "inputFormat": "CSV",
+                    "connectionTimeoutInMs": 50000,
+                    "networkBatchSize": 512,
+                    "csvBulkTimeoutMs": 50000,
+                    "outputInBatches": true,
+                    "outputBatchSize": 2000,
+                    "decimalOutputFormat": "Floating-point"
+                }
+            }
+        },
+        "wiretap1": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 442.99999713897705,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "celoniscloudupload2": {
+            "component": "cloud.celonis.pushToCelonisIBC",
+            "metadata": {
+                "label": "Celonis Cloud Upload",
+                "x": 257.99999809265137,
+                "y": 63.5,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "realm": "eu-1",
+                    "team": "sap-qa",
+                    "is_upsert": false,
+                    "column_type_dict": {
+                        "CASE_KEY": "str",
+                        "SLIPPED_DEALS_OPP_FLAG_NTR": "str",
+                        "SLIPPED_DEALS_OPP_FLAG_DTR": "str"
+                    }
+                }
+            }
+        },
+        "celonispushjobcreator1": {
+            "component": "cloud.celonis.pushJobCreator",
+            "metadata": {
+                "label": "Celonis Push Job Creator",
+                "x": 997.9999942779541,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "extensible": false,
+                "config": {
+                    "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
+                    "realm": "eu-1",
+                    "team": "sap-qa",
+                    "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
+                    "is_upsert": false,
+                    "table_name": "SALES_SLIPPED",
+                    "primary_keys": [
+                        "CASE_KEY"
+                    ]
+                }
+            }
+        },
+        "graphterminator11": {
+            "component": "com.sap.util.graphTerminator",
+            "metadata": {
+                "label": "Graph Terminator",
+                "x": 997.9999942779541,
+                "y": 12,
+                "height": 80,
+                "width": 120,
+                "config": {}
+            },
+            "name": "graphterminator1"
+        },
+        "stringoperator11": {
+            "component": "com.sap.system.jsengine",
+            "metadata": {
+                "label": "SQL loop YYYY-QQ",
+                "x": 812.9999952316284,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {
+                    "script": "// SQL with placeholder for YYYYQQ value in parameter used for View CL_GSPI_SELFSVC_SLIPPED_DEALS_HARMONIZED.\r\n// Each time the graph loops, this placeholder is replaced with the latest looping YYYYQQ value, eg: 2019-Q3.\r\nvar cntr = 0;\r\n\r\n// Get current date.\r\nvar runDate = new Date();\r\n\r\n// Get current YYYY-Q# quarter.\r\n// NB: getMonth returns month numbers 0 to 11!\r\nvar currentYYYYQQ =\r\n  runDate.getFullYear()\r\n  + \"-Q\"\r\n  + Math.ceil( ( runDate.getMonth() + 1 ) / 3 );\r\n\r\n// Get initial YYYY-Q# quarter: start of year, two years ago.\r\nvar loopingYYYYQQ = ( runDate.getFullYear() - 2 ) + \"-Q1\";\r\n\r\n///////////////////////////////////////////////////////////////////////////////////////\r\n// Returns the latest looping YYYYQQ value, but if this is in the future,\r\n// it writes to the STOP output port instead to terminate the graph.\r\nfunction getData(inUpsert) {\r\n  var msg = {};\r\n  msg.Attributes = {};\r\n\r\n  // Initialise string\r\n  var YYYYQQ = null;\r\n\r\n  // Populate string, until looping quarter is in the future\r\n  if ( loopingYYYYQQ > currentYYYYQQ ) {\r\n    $.stop( \"now!\" ); // Causes the graph to terminate.\r\n  } else {\r\n    YYYYQQ = loopingYYYYQQ;\r\n    msg.Body = $.config.getString(\"sql\").replace( /<<YYYYQQ>>/g, YYYYQQ ).replace(/\\\\/g, '');\r\n\r\n    // set is_upsert flag from input \r\n    msg.Attributes[\"is_upsert\"] = inUpsert;\r\n  }\r\n\r\n  cntr+=1;\r\n  \r\n  return msg;\r\n}\r\n\r\n///////////////////////////////////////////////////////////////////////////////////////\r\n// Returns the first YYYYQQ value.\r\nfunction firstQQ() {\r\n  $.out(getData(false));\r\n}\r\n\r\n///////////////////////////////////////////////////////////////////////////////////////\r\n// Calculates and returns second and subsequent YYYYQQ values.\r\nfunction nextQQ(s) {\r\n  if (s == 'exception') {\r\n    $.stop( \"Celonis Exception\" ); // Causes the graph to terminate.\r\n  }\r\n  \r\n  looping();\r\n  \r\n  $.out(getData(true));\r\n}\r\n\r\n///////////////////////////////////////////////////////////////////////////////////////\r\n// Calculates and returns second and subsequent YYYYQQ values.\r\nfunction nextQQmsg(ctx, s) {\r\n  var sUpsert = true;\r\n  \r\n  if (s.Attributes[\"status\"] == 'exception') {\r\n    $.stop( \"Celonis Exception\" ); // Causes the graph to terminate.\r\n  }\r\n  \r\n  looping();\r\n\r\n  // has any message, including this one, had any rows\r\n  if (s.Attributes[\"rows\"] > 0) {\r\n    sUpsert = true;\r\n  } else {\r\n    // keep is_upsert = false until there are rows so we don't get Celonis error of missing primary key\r\n    sUpsert = false;\r\n  }\r\n\r\n  $.out(getData(sUpsert));\r\n}\r\n\r\nfunction looping() {\r\n  var loopingQQ = loopingYYYYQQ.substr( -1 );\r\n\r\n  if ( loopingQQ < 4 ) {\r\n    loopingYYYYQQ =\r\n      parseInt( loopingYYYYQQ.substr( 0, 4 ) )     // Same year...\r\n      + \"-Q\"\r\n      + ( parseInt( loopingQQ ) + 1 );             // Next quarter.\r\n  } else {\r\n    loopingYYYYQQ =\r\n      parseInt( loopingYYYYQQ.substr( 0, 4 ) ) + 1 // Next year...\r\n      + \"-Q1\";                                     // Quarter 1.\r\n  }\r\n\r\n}\r\n\r\n///////////////////////////////////////////////////////////////////////////////////////\r\n$.addGenerator(firstQQ);\r\n$.setPortCallback(\"input\", nextQQ);\r\n$.setPortCallback(\"inmsg\", nextQQmsg);\r\n",
+                    "sql": "select SDH.IC_OBJECT_ID as CASE_KEY, SDH.SLIPPED_DEALS_OPP_FLAG_NTR as SLIPPED_DEALS_OPP_FLAG_NTR, SDH.SLIPPED_DEALS_OPP_FLAG_DTR as SLIPPED_DEALS_OPP_FLAG_DTR from _SYS_BIC.\\\"corp.gspi.datamart.selfsvc/CL_GSPI_SELFSVC_SLIPPED_DEALS_HARMONIZED\\\" (PLACEHOLDER = ('$$FOCUS_QUARTER$$', '<<YYYYQQ>>'), 'PLACEHOLDER' = ('$$CURRENCY_CODE$$', 'EUR')) SDH "
+                },
+                "additionalinports": [
+                    {
+                        "name": "inmsg",
+                        "type": "message"
+                    }
+                ],
+                "additionaloutports": [
+                    {
+                        "name": "stop",
+                        "type": "string"
+                    },
+                    {
+                        "name": "out",
+                        "type": "message"
+                    }
+                ]
+            },
+            "name": "stringoperator1"
+        },
+        "messageoperator1": {
+            "component": "com.sap.system.jsmengine",
+            "metadata": {
+                "label": "Message Operator",
+                "x": 72.99999904632568,
+                "y": 72.5,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {
+                    "script": "var cntr = 0;\nvar rows = 0;\n\nfunction onInput(ctx,s) {\n    var msg = $.copyMessage(s);\n    \n    // is there a message body\n    if(typeof s.Body.slice()[0] !== \"undefined\" && s.Body.slice()[0] !== null) {\n      // how many rows in this message are added to all previous messages row count\n      rows+=s.Body.slice().length;\n    }\n    \n    msg.Attributes[\"rows\"] = rows;\n    \n    cntr+=1;\n    \n    if (s.Body.slice().length === 0) {\n      $.nodata(msg);\n    } else {\n      $.output(msg);\n    }\n}\n\n$.setPortCallback(\"input\",onInput);\n"
+                },
+                "additionaloutports": [
+                    {
+                        "name": "nodata",
+                        "type": "message"
+                    }
+                ]
+            }
+        },
+        "21multiplexer1": {
+            "component": "com.sap.system.multiplexer.2-1",
+            "metadata": {
+                "label": "2:1 Multiplexer",
+                "x": 442.99999713897705,
+                "y": 132,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {}
+            }
+        },
+        "wiretap2": {
+            "component": "com.sap.util.wiretap",
+            "metadata": {
+                "label": "Wiretap",
+                "x": 1198.9999933242798,
+                "y": 12.5,
+                "height": 80,
+                "width": 120,
+                "ui": "dynpath",
+                "config": {}
+            }
+        },
+        "celonisloopingstatus1": {
+            "component": "EDT.CELONIS.call.looping_status",
+            "metadata": {
+                "label": "Celonis Looping Status",
+                "x": 627.9999961853027,
+                "y": 72,
+                "height": 80,
+                "width": 120,
+                "extensible": true,
+                "config": {}
+            }
+        }
+    },
+    "groups": [],
+    "connections": [
+        {
+            "metadata": {
+                "points": "381.99999809265137,94.5 409.9999976158142,94.5 409.9999976158142,52 437.99999713897705,52"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celoniscloudupload2"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "936.9999952316284,112 964.9999947547913,112 964.9999947547913,52 992.9999942779541,52"
+            },
+            "src": {
+                "port": "stop",
+                "process": "stringoperator11"
+            },
+            "tgt": {
+                "port": "stop",
+                "process": "graphterminator11"
+            }
+        },
+        {
+            "metadata": {
+                "points": "936.9999952316284,130 964.9999947547913,130 964.9999947547913,172 992.9999942779541,172"
+            },
+            "src": {
+                "port": "out",
+                "process": "stringoperator11"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celonispushjobcreator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "1121.999994277954,181 1165.999993801117,181 1165.999993801117,163.5 1193.9999933242798,163.5"
+            },
+            "src": {
+                "port": "output",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "sql",
+                "process": "saphanaclient1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "1322.9999933242798,172.5 1350.9999928474426,172.5 1350.9999928474426,240.49999952316284 1149.999993801117,240.49999952316284 1149.999993801117,239.99999952316284 964.9999947547913,239.99999952316284 964.9999947547913,179.99999952316284 594.9999966621399,179.99999952316284 594.9999966621399,239.99999952316284 409.9999976158142,239.99999952316284 409.9999976158142,188.49999952316284 224.99999856948853,188.49999952316284 224.99999856948853,180.49999952316284 12,180.49999952316284 12,112.5 67.99999904632568,112.5"
+            },
+            "src": {
+                "port": "result",
+                "process": "saphanaclient1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "messageoperator1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "196.99999904632568,103.5 252.99999809265137,103.5"
+            },
+            "src": {
+                "port": "output",
+                "process": "messageoperator1"
+            },
+            "tgt": {
+                "port": "input",
+                "process": "celoniscloudupload2"
+            }
+        },
+        {
+            "metadata": {
+                "points": "1121.999994277954,163 1149.999993801117,163 1149.999993801117,52.5 1193.9999933242798,52.5"
+            },
+            "src": {
+                "port": "debug",
+                "process": "celonispushjobcreator1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "wiretap2"
+            }
+        },
+        {
+            "metadata": {
+                "points": "381.99999809265137,112.5 409.9999976158142,112.5 409.9999976158142,163 437.99999713897705,163"
+            },
+            "src": {
+                "port": "output",
+                "process": "celoniscloudupload2"
+            },
+            "tgt": {
+                "port": "in1",
+                "process": "21multiplexer1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "196.99999904632568,121.5 224.99999856948853,121.5 224.99999856948853,171.49999952316284 409.9999976158142,171.49999952316284 409.9999976158142,181 437.99999713897705,181"
+            },
+            "src": {
+                "port": "nodata",
+                "process": "messageoperator1"
+            },
+            "tgt": {
+                "port": "in2",
+                "process": "21multiplexer1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "566.999997138977,172 594.9999966621399,172 594.9999966621399,112 622.9999961853027,112"
+            },
+            "src": {
+                "port": "out1",
+                "process": "21multiplexer1"
+            },
+            "tgt": {
+                "port": "in",
+                "process": "celonisloopingstatus1"
+            }
+        },
+        {
+            "metadata": {
+                "points": "751.9999961853027,112 779.9999957084656,112 779.9999957084656,121 807.9999952316284,121"
+            },
+            "src": {
+                "port": "outmsg",
+                "process": "celonisloopingstatus1"
+            },
+            "tgt": {
+                "port": "inmsg",
+                "process": "stringoperator11"
+            }
+        }
+    ],
+    "inports": {},
+    "outports": {}
+}
