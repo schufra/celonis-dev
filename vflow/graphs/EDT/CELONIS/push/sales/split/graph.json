@@ -135,7 +135,7 @@
                 "config": {}
             }
         },
-        "celoniscloudupload2": {
+        "celoniscloudupload1": {
             "component": "cloud.celonis.pushToCelonisIBC",
             "metadata": {
                 "label": "Celonis Cloud Upload",
@@ -146,7 +146,6 @@
                 "extensible": false,
                 "config": {
                     "api_key": "ODMxOTIyZjYtNTVlMy00MWQ3LWI2MTgtZmY0N2U4MmI3NmQwOmc4UVRYUUJiWThrQ3pQUGIrdzVjcU5CWHpHbjRQak54Rk55U01ENy9VZUhO",
-                    "is_upsert": false,
                     "pool_id": "2b3ee944-f813-4035-98b5-b0249a5d5de3",
                     "realm": "eu-1",
                     "team": "sap-qa",
@@ -226,6 +225,19 @@
         },
         {
             "metadata": {
+                "points": "979.9999961853027,172 1007.9999957084656,172 1007.9999957084656,112 1035.9999952316284,112"
+            },
+            "src": {
+                "port": "out",
+                "process": "celonisstatus1"
+            },
+            "tgt": {
+                "port": "stop",
+                "process": "graphterminator1"
+            }
+        },
+        {
+            "metadata": {
                 "points": "609.9999980926514,172 637.9999976158142,172 637.9999976158142,112 665.999997138977,112"
             },
             "src": {
@@ -234,7 +246,7 @@
             },
             "tgt": {
                 "port": "input",
-                "process": "celoniscloudupload2"
+                "process": "celoniscloudupload1"
             }
         },
         {
@@ -243,7 +255,7 @@
             },
             "src": {
                 "port": "debug",
-                "process": "celoniscloudupload2"
+                "process": "celoniscloudupload1"
             },
             "tgt": {
                 "port": "in",
@@ -256,24 +268,11 @@
             },
             "src": {
                 "port": "output",
-                "process": "celoniscloudupload2"
+                "process": "celoniscloudupload1"
             },
             "tgt": {
                 "port": "in",
                 "process": "celonisstatus1"
-            }
-        },
-        {
-            "metadata": {
-                "points": "979.9999961853027,172 1007.9999957084656,172 1007.9999957084656,112 1035.9999952316284,112"
-            },
-            "src": {
-                "port": "out",
-                "process": "celonisstatus1"
-            },
-            "tgt": {
-                "port": "stop",
-                "process": "graphterminator1"
             }
         }
     ],
